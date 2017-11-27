@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: keit-edge
+  labels:
+    app: keit-edge
+  annotations:
+    goway-service: "true"
+spec:
+  type: NodePort
+  ports:
+  - port: 8081
+    name: http
+  selector:
+    app: keit-edge
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: keit-edge
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: keit-edge
+        version: v1
+    spec:
+      containers:
+      - name: keit
+        image: andrepinto/keit-edge-envoy:1.0.1
+        resources:
+          requests:
+            cpu: "100m"
+        imagePullPolicy: IfNotPresent #Always
+        ports:
+        - containerPort: 8081

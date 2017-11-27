@@ -1,0 +1,54 @@
+{
+  "listeners": [],
+  "lds": {
+    "cluster": "rds",
+    "refresh_delay_ms": 1000
+  },
+  "admin": {
+    "access_log_path": "/tmp/envoy-access-log",
+    "address": "tcp://127.0.0.1:8001"
+  },
+  "cluster_manager": {
+    "clusters": [
+      {
+        "name": "rds",
+        "type": "strict_dns",
+        "connect_timeout_ms": 250,
+        "lb_type": "round_robin",
+        "hosts": [
+          {
+            "url": "tcp://127.0.0.1:8000"
+          }
+        ]
+      }
+    ],
+    "sds": {
+      "cluster": {
+        "name": "sds",
+        "type": "strict_dns",
+        "connect_timeout_ms": 250,
+        "lb_type": "round_robin",
+        "hosts": [
+          {
+            "url": "tcp://127.0.0.1:8000"
+          }
+        ]
+      },
+      "refresh_delay_ms": 1000
+    },
+    "cds": {
+      "cluster": {
+        "name": "cds",
+        "type": "strict_dns",
+        "connect_timeout_ms": 250,
+        "lb_type": "round_robin",
+        "hosts": [
+          {
+            "url": "tcp://127.0.0.1:8000"
+          }
+        ]
+      },
+      "refresh_delay_ms": 1000
+    }
+  }
+}

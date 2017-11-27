@@ -1,0 +1,16 @@
+FROM debian:wheezy
+
+RUN apt-get update --fix-missing
+RUN apt-get install -y ca-certificates
+RUN apt-get install curl --yes
+
+RUN mkdir /keit
+
+COPY bin/v2/main /keit/main
+RUN chmod +x /keit/main
+
+WORKDIR /keit
+
+EXPOSE 3000
+
+CMD ./main
