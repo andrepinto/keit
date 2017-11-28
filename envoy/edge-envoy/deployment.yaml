@@ -29,9 +29,109 @@ spec:
       containers:
       - name: keit
         image: andrepinto/keit-edge-envoy:1.0.1
+        volumeMounts:
+        - mountPath: "/etc/envoy"
+          name: config-volume
         resources:
           requests:
             cpu: "100m"
         imagePullPolicy: IfNotPresent #Always
         ports:
         - containerPort: 8081
+      volumes:
+      - configMap:
+          name: keit-edge-config
+        name: config-volume
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keit-edge-config
+data:
+  envoy.json: |
+  {
+    "listeners": [
+      {
+        "address": "tcp://0.0.0.0:8081",
+        "filters": [
+          {
+            "type": "read",
+            "name": "http_connection_manager",
+            "config": {
+              "codec_type": "auto",
+              "stat_prefix": "ingress_http",
+              "generate_request_id": true,
+              "tracing": {
+                "operation_name": "egress"
+              },
+              "route_config": {
+                "virtual_hosts": [
+                  {
+                    "name": "backend",
+                    "domains": ["*"],
+                    "routes": [
+                      {
+                        "timeout_ms": 0,
+                        "prefix": "/api",
+                        "cluster": "keit"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "filters": [
+                {
+                  "type": "decoder",
+                  "name": "router",
+                  "config": {}
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "tracing": {
+      "http": {
+        "driver": {
+          "type": "zipkin", 
+          "config": {
+            "collector_cluster": "jaeger",
+            "collector_endpoint": "/api/v1/spans"
+          }
+        }
+      }
+    }, 
+    "admin": {
+      "access_log_path": "/dev/null",
+      "address": "tcp://127.0.0.1:8002"
+    },
+    "cluster_manager": {
+      "clusters": [
+        {
+          "name": "keit",
+          "connect_timeout_ms": 250,
+          "type": "strict_dns",
+          "service_name": "keit",
+          "lb_type": "round_robin",
+          "features": "http2",
+          "hosts": [
+            {
+              "url": "tcp://keit:80"
+            }
+          ]
+        },
+        {
+          "name": "jaeger",
+          "connect_timeout_ms": 1000,
+          "type": "strict_dns",
+          "lb_type": "round_robin",
+          "hosts": [
+            {
+              "url": "tcp://jager-infra:9411"
+            }
+          ]
+        }
+      ]
+    }
+  }
