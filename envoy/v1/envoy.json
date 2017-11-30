@@ -79,7 +79,7 @@
             "lb_type": "round_robin",
             "hosts": [
               {
-                "url": "tcp://docker.for.mac.localhost:9411"
+                "url": "tcp://jager-infra:9411"
               }
             ]
           }

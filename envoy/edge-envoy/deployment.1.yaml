@@ -1,0 +1,157 @@
+apiVersion: v1
+kind: Service
+metadata: 
+  annotations: 
+    goway-service: "true"
+  labels: 
+    app: keit-edge
+  name: keit-edge
+spec: 
+  ports: 
+    - 
+      name: http
+      port: 8081
+  selector: 
+    app: keit-edge
+  type: NodePort
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: keit-edge
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: keit-edge
+        version: v1
+    spec:
+      containers:
+      - name: keit
+        image: andrepinto/keit-edge-envoy:1.0.1
+        volumeMounts:
+        - mountPath: "/etc/envoy"
+          name: config-volume
+        resources:
+          requests:
+            cpu: "100m"
+        imagePullPolicy: IfNotPresent #Always
+        ports:
+        - containerPort: 8081
+      volumes:
+      - configMap:
+          name: keit-edge-config
+        name: config-volume
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keit-edge-config
+data:
+  envoy.json: |
+    {
+      "listeners": [
+        {
+          "address": "tcp://0.0.0.0:8081",
+          "filters": [
+            {
+              "type": "read",
+              "name": "http_connection_manager",
+              "config": {
+                "codec_type": "auto",
+                "stat_prefix": "ingress_http",
+                "generate_request_id": true,
+                "tracing": {
+                  "operation_name": "egress"
+                },
+                "route_config": {
+                  "virtual_hosts": [
+                    {
+                      "name": "backend",
+                      "domains": ["*"],
+                      "routes": [
+                        {
+                          "timeout_ms": 0,
+                          "prefix": "/api",
+                          "weighted_clusters": {
+                            "runtime_key_prefix" : "routing.traffic_split.keit",
+                            "clusters" : [
+                              { "name" : "keit_v1", "weight" : 80 },
+                              { "name" : "keit_v2", "weight" : 20 }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "filters": [
+                  {
+                    "type": "decoder",
+                    "name": "router",
+                    "config": {}
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "tracing": {
+        "http": {
+          "driver": {
+            "type": "zipkin", 
+            "config": {
+              "collector_cluster": "jaeger",
+              "collector_endpoint": "/api/v1/spans"
+            }
+          }
+        }
+      }, 
+      "admin": {
+        "access_log_path": "/dev/null",
+        "address": "tcp://127.0.0.1:8002"
+      },
+      "cluster_manager": {
+        "clusters": [
+          {
+            "name": "keit_v1",
+            "connect_timeout_ms": 250,
+            "type": "strict_dns",
+            "service_name": "keit-v1",
+            "lb_type": "round_robin",
+            "features": "http2",
+            "hosts": [
+              {
+                "url": "tcp://keit-v1:80"
+              }
+            ]
+          },
+          {
+            "name": "keit_v2",
+            "connect_timeout_ms": 250,
+            "type": "strict_dns",
+            "service_name": "keit-v2",
+            "lb_type": "round_robin",
+            "features": "http2",
+            "hosts": [
+              {
+                "url": "tcp://keit-v2:80"
+              }
+            ]
+          },
+          {
+            "name": "jaeger",
+            "connect_timeout_ms": 1000,
+            "type": "strict_dns",
+            "lb_type": "round_robin",
+            "hosts": [
+              {
+                "url": "tcp://jager-infra:9411"
+              }
+            ]
+          }
+        ]
+      }
+    }

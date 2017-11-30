@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: keit
+  name: keit-v1
   labels:
-    app: keit
+    app: keit-v1
   annotations:
     goway-service: "true"
 spec:
@@ -12,7 +12,23 @@ spec:
   - port: 80
     name: http
   selector:
-    app: keit
+    app: keit-v1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keit-v2
+  labels:
+    app: keit-v2
+  annotations:
+    goway-service: "true"
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    name: http
+  selector:
+    app: keit-v2
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -23,7 +39,7 @@ spec:
   template:
     metadata:
       labels:
-        app: keit
+        app: keit-v1
         version: v1
     spec:
       containers:
@@ -45,7 +61,7 @@ spec:
   template:
     metadata:
       labels:
-        app: keit
+        app: keit-v2
         version: v2
     spec:
       containers:
