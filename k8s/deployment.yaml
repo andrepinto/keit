@@ -67,6 +67,19 @@ metadata:
   annotations:
     goway-service: "true"
     goway-perfix: "api"
+    trafic-control: |
+      destination: pictures.example.local 
+      match:
+        source: frontend.example.local 
+      route:
+      - tags:
+          version: v1.5
+          env: prod
+        weight: 99
+      - tags:
+          version: v2.0-alpha
+          env: staging
+      weight: 1
 spec:
   backend:
     serviceName: keit-v1
