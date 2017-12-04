@@ -27,9 +27,9 @@ run-edge-envoy:
 	docker run -p 8081:8081 andrepinto/keit-edge-envoy:1.0.1 
 
 run-keit-envoy-1:
-	docker run -p 80:80 -p 8001:8001 andrepinto/keit-envoy:1.0.1 
+	docker run -p 9000:80 -p 8005:8001 andrepinto/keit-envoy:1.0.1 
 
 run-keit-envoy-2:
-	docker run -p 80:80 -p 8001:8001 andrepinto/keit-envoy:2.0.1 
+	docker run -p 9001:80 -p 8004:8001 andrepinto/keit-envoy:2.0.1 
 		
 .PHONY: build docker run

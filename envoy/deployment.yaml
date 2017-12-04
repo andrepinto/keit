@@ -74,3 +74,16 @@ spec:
         ports:
         - containerPort: 80
 ---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: keit-v1
+  labels:
+    app: keit-v1
+  annotations:
+    goway-service: "true"
+    goway-perfix: "api"
+spec:
+  backend:
+    serviceName: keit-v1
+    servicePort: 80
