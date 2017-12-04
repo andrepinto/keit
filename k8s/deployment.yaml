@@ -61,13 +61,14 @@ spec:
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: keit
+  name: keit-v1
+  labels:
+    app: keit-v1
+  annotations:
+    goway-service: "true"
+    goway-perfix: "api"
 spec:
-  rules:
-  - http:
-      paths:
-      - path: /api
-        backend:
-          serviceName: keit
-          servicePort: 3000
+  backend:
+    serviceName: keit-v1
+    servicePort: 80
 ---
